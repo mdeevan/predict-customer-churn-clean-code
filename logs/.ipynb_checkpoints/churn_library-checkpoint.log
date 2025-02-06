@@ -1,0 +1,13 @@
+2025-02-05 16:44:25 - root - INFO - Testing import_data: SUCCESS
+2025-02-05 16:44:27 - root - INFO - perform_eda: SUCCESS
+2025-02-05 16:44:27 - root - INFO - file path churn_distribution.png exists: SUCCESS
+2025-02-05 16:44:27 - root - INFO - file path customer_age_distribution.png exists: SUCCESS
+2025-02-05 16:44:27 - root - INFO - file path marital_status_distribution.png exists: SUCCESS
+2025-02-05 16:44:27 - root - INFO - file path Total_Transaction_distribution.png exists: SUCCESS
+2025-02-05 16:44:27 - root - INFO - file path heatmap.png exists: SUCCESS
+2025-02-05 16:44:27 - root - INFO - encoder helper : SUCCESS
+2025-02-05 16:44:27 - root - INFO - Gender_Churn successfully created : SUCCESS
+2025-02-05 16:44:27 - root - INFO - Education_Level_Churn successfully created : SUCCESS
+2025-02-05 16:44:27 - root - INFO - Marital_Status_Churn successfully created : SUCCESS
+2025-02-05 16:44:27 - root - INFO - Income_Category_Churn successfully created : SUCCESS
+2025-02-05 16:44:27 - root - INFO - Card_Category_Churn successfully created : SUCCESS
