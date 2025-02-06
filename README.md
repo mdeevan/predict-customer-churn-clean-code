@@ -50,15 +50,19 @@ Overview of the files and data present in the root directory.
 
 1. install the required libraries  
     `python -m pip install -r requirements_py3.10.txt`
+
+   OR
+
+   make install
  
-2. running the code  
+3. running the code  
     its build and tested with python 3.10  
     `python churn_library.py`
 
-3. formatting the code  
+4. formatting the code  
     `autopep8 --in-place --aggressive --aggressive churn_script_logging_and_tests.py`  
     `autopep8 --in-place --aggressive --aggressive churn_library.py`  
 
-4. code analysis for programming errors  
+5. code analysis for programming errors  
     `pylint churn_library.py`  
     `pylint churn_script_logging_and_tests.py`  

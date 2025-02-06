@@ -30,7 +30,7 @@ os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 
 
 class CustomerChurn():
-    def __init__(self,  filename="bank_data.csv", nrows=None):
+    def __init__(self, filename="bank_data.csv", nrows=None):
         self.filename = filename
         self.df = pd.DataFrame()
         self.nrows = nrows
@@ -57,7 +57,7 @@ class CustomerChurn():
         '''
         return os.path.join(folder, filename)
 
-    def _import_data(self, filename="bank_data.csv"):
+    def _import_data(self, nrows=None):
         '''
         returns dataframe for the csv found at path
 
@@ -67,8 +67,11 @@ class CustomerChurn():
                 df: pandas dataframe
         '''
 
-        self.df = pd.read_csv(os.path.join(constants.DATA_FOLDER, self.filename), 
-                              nrows=self.nrows)
+        self.df = pd.read_csv(
+            os.path.join(
+                constants.DATA_FOLDER,
+                self.filename),
+            nrows=self.nrows)
 
     def _perform_eda(self):
         '''
@@ -85,31 +88,34 @@ class CustomerChurn():
 
         self.df['Churn'] = self.df['Attrition_Flag'].apply(
             lambda val: 0 if val == "Existing Customer" else 1)
-    
+
         plt.figure(figsize=(20, 10))
         self.df['Churn'].hist()
         plt.savefig(self.__get_path(path, "churn_distribution.png"))
         plt.close()
-    
+
         plt.figure(figsize=(20, 10))
         self.df['Customer_Age'].hist()
         plt.savefig(self.__get_path(path, "customer_age_distribution.png"))
         plt.close()
-    
+
         plt.figure(figsize=(20, 10))
         self.df.Marital_Status.value_counts('normalize').plot(kind='bar')
         plt.savefig(self.__get_path(path, "marital_status_distribution.png"))
         plt.close()
-    
+
         plt.figure(figsize=(20, 10))
         # distplot is deprecated. Use histplot instead
         # sns.distplot(df['Total_Trans_Ct'])
         # Show distributions of 'Total_Trans_Ct' and add a smooth curve obtained
         # using a kernel density estimate
         sns.histplot(self.df['Total_Trans_Ct'], stat='density', kde=True)
-        plt.savefig(self.__get_path(path, "Total_Transaction_distribution.png"))
+        plt.savefig(
+            self.__get_path(
+                path,
+                "Total_Transaction_distribution.png"))
         plt.close()
-    
+
         plt.figure(figsize=(20, 10))
         sns.heatmap(
             self.df.corr(numeric_only=True),
@@ -118,34 +124,33 @@ class CustomerChurn():
             linewidths=2)
         plt.savefig(self.__get_path(path, "heatmap.png"))
         plt.close()
-    
+
     def _encoder_helper(self, category_lst=None, response='Churn'):
         '''
         helper function to turn each categorical column into a new column with
         propotion of churn for each category - associated with cell 15 from the notebook
-    
+
         input:
                 df: pandas dataframe (class variable, to be used)
                 category_lst: list of columns that contain categorical features
                 response: string of response name [optional argument that
                 could be used for naming variables or index y column]
-    
+
         output:
                 df: pandas dataframe with new columns for
         '''
-    
+
         if category_lst is None:
             category_lst = constants.CAT_COLUMNS
-    
+
         for col in category_lst:
             lst = []
             grp = self.df.groupby(col).mean(numeric_only=True)['Churn']
-    
+
             for val in self.df[col]:
                 lst.append(grp.loc[val])
-    
+
             self.df[f"{col}_{response}"] = lst
-    
 
     def _perform_feature_engineering(self, keep_cols=None):
         '''
@@ -153,7 +158,7 @@ class CustomerChurn():
             df: pandas dataframe (instance variable)
             response: string of response name [optional argument
             that could be used for naming variables or index y column]
-    
+
         output:
             X : the original data set
             y: the original target data set
@@ -163,19 +168,19 @@ class CustomerChurn():
                 y_train: y training data
                 y_test: y testing data
         '''
-    
+
         if keep_cols is None:
             keep_cols = constants.KEEP_COLS
-    
+
         self.X_data = self.df[keep_cols]
         self.y_data = self. df['Churn']
-    
-        self.X_train, self.X_test, self.y_train, self.y_test = \
-            train_test_split(self.X_data, self.y_data, test_size=0.3, random_state=42)
+
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
+            self.X_data, self.y_data, test_size=0.3, random_state=42)
 
     def _train_models(self,
-                     model_folder=constants.MODEL_FOLDER,
-                     result_folder=constants.RESULT_FOLDER):
+                      model_folder=constants.MODEL_FOLDER,
+                      result_folder=constants.RESULT_FOLDER):
         '''
         train, store model results: images + scores, and store models
         input:
@@ -187,80 +192,80 @@ class CustomerChurn():
         output:
                   None
         '''
-    
+
         # grid search
         rfc = RandomForestClassifier(random_state=42)
         # Use a different solver if the default 'lbfgs' fails to converge
         # Reference:
         # https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression
         lrc = LogisticRegression(solver='lbfgs', max_iter=3000)
-    
+
         param_grid = {
             'n_estimators': [200, 500],
             'max_features': ['auto', 'sqrt'],
             'max_depth': [4, 5, 100],
             'criterion': ['gini', 'entropy']
         }
-    
+
         cv_rfc = GridSearchCV(estimator=rfc, param_grid=param_grid, cv=5)
         cv_rfc.fit(self.X_train, self.y_train)
         self.model = cv_rfc
-    
+
         lrc.fit(self.X_train, self.y_train)
-    
+
         self.y_train_preds_rf = cv_rfc.best_estimator_.predict(self.X_train)
         self.y_test_preds_rf = cv_rfc.best_estimator_.predict(self.X_test)
-    
+
         self.y_train_preds_lr = lrc.predict(self.X_train)
         self.y_test_preds_lr = lrc.predict(self.X_test)
-    
+
         # scores
         print('random forest results')
         print('test results')
         print(classification_report(self.y_test, self.y_test_preds_rf))
         print('train results')
         print(classification_report(self.y_train, self.y_train_preds_rf))
-    
+
         print('logistic regression results')
         print('test results')
         print(classification_report(self.y_test, self.y_test_preds_lr))
         print('train results')
         print(classification_report(self.y_train, self.y_train_preds_lr))
-    
+
         # save best model
         joblib.dump(
             cv_rfc.best_estimator_,
             self.__get_path(model_folder, 'rfc_model.pkl'))
         joblib.dump(lrc, self.__get_path(model_folder, 'logistic_model.pkl'))
-    
+
         # lrc_plot = plot_roc_curve(lrc, X_test, y_test)
         lrc_plot = RocCurveDisplay.from_estimator(lrc,
                                                   self.X_test,
                                                   self.y_test)
-    
+
         plt.figure(figsize=(15, 8))
-    
+
         ax = plt.gca()
         lrc_plot.plot(ax=ax, alpha=0.8)
         plt.savefig(self.__get_path(result_folder, "roc_curve_result.png"))
-    
+
         # rfc_disp = plot_roc_curve(cv_rfc, X_test, y_test, ax=ax, alpha=0.8)
         rfc_disp = RocCurveDisplay.from_estimator(cv_rfc.best_estimator_,
                                                   self.X_test,
                                                   self.y_test,
                                                   ax=ax,
                                                   alpha=0.8)
-    
+
         rfc_disp.plot(ax=ax, alpha=0.8)
         plt.savefig(self.__get_path(result_folder, "rfc_roc_curve_result.png"))
-    
+
         explainer = shap.TreeExplainer(cv_rfc.best_estimator_)
         shap_values = explainer.shap_values(self.X_test)
         shap.summary_plot(shap_values, self.X_test, plot_type="bar")
         plt.savefig(self.__get_path(result_folder, "shap_summary.png"))
-    
+
     def _classification_report_image(self,
-                                    path=constants.RESULT_FOLDER):
+                                     path=constants.RESULT_FOLDER):
         '''
         produces classification report for training and testing results and stores report as image
         in images folder
@@ -271,16 +276,16 @@ class CustomerChurn():
                 y_train_preds_rf: training predictions from random forest
                 y_test_preds_lr: test predictions from logistic regression
                 y_test_preds_rf: test predictions from random forest
-    
+
         output:
                  None
         '''
-    
+
         plt.rc('figure', figsize=(5, 5))
 
         plt.text(0.01, 1.25, str('Random Forest Train'),
                  {'fontsize': 10}, fontproperties='monospace')
-        plt.text(0.01, 0.05, str(classification_report(self.y_test, 
+        plt.text(0.01, 0.05, str(classification_report(self.y_test,
                                                        self.y_test_preds_rf)),
                  {'fontsize': 10}, fontproperties='monospace')
         plt.text(0.01, 0.6, str('Random Forest Test'),
@@ -290,16 +295,16 @@ class CustomerChurn():
                  {'fontsize': 10}, fontproperties='monospace')
         plt.axis('off')
         plt.savefig(self.__get_path(path, "rf_result.png"))
-    
+
         plt.rc('figure', figsize=(5, 5))
         plt.text(0.01, 1.25, str('Logistic Regression Train'),
                  {'fontsize': 10}, fontproperties='monospace')
-        plt.text(0.01, 0.05, str(classification_report(self.y_train, 
-                                                       self.y_train_preds_lr)), 
+        plt.text(0.01, 0.05, str(classification_report(self.y_train,
+                                                       self.y_train_preds_lr)),
                  {'fontsize': 10}, fontproperties='monospace')
         plt.text(0.01, 0.6, str('Logistic Regression Test'),
                  {'fontsize': 10}, fontproperties='monospace')
-        plt.text(0.01, 0.7, str(classification_report(self.y_test, 
+        plt.text(0.01, 0.7, str(classification_report(self.y_test,
                                                       self.y_test_preds_lr)),
                  {'fontsize': 10}, fontproperties='monospace')
         plt.axis('off')
@@ -312,7 +317,7 @@ class CustomerChurn():
                 model: instance variable
                 X_data: instance variable
                 output_pth: path to store the figure
-    
+
         output:
                  None
         '''
@@ -320,26 +325,29 @@ class CustomerChurn():
         importances = self.model.best_estimator_.feature_importances_
         # Sort feature importances in descending order
         indices = np.argsort(importances)[::-1]
-    
+
         # Rearrange feature names so they match the sorted feature importances
         names = [self.X_data.columns[i] for i in indices]
-    
+
         # Create plot
         plt.figure(figsize=(20, 5))
-    
+
         # Create plot title
         plt.title("Feature Importance")
         plt.ylabel('Importance')
-    
+
         # Add bars
         plt.bar(range(self.X_data.shape[1]), importances[indices])
-    
+
         # Add feature names as x-axis labels
         plt.xticks(range(self.X_data.shape[1]), names, rotation=90)
         plt.savefig(self.__get_path(path, "feature_importances.png"))
 
     def execute(self):
-        self._import_data()
+        '''
+        public method to perform EDA, feature creation and model training
+        '''
+        self._import_data(self.nrows)
         print("data imported")
         self._perform_eda()
         print('eda performed')
@@ -357,7 +365,6 @@ class CustomerChurn():
 
 if __name__ == "__main__":
 
-    customer_churn = CustomerChurn() 
+    customer_churn = CustomerChurn()
     print("object created, lets' execute")
     customer_churn.execute()
-    
