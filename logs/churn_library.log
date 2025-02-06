@@ -1,0 +1,24 @@
+2025-02-06 19:55:38 - root - INFO - setup_class
+2025-02-06 19:55:38 - root - INFO - class created, df has 50 rows
+2025-02-06 19:55:38 - root - INFO - class created, filename is bank_data.csv 
+2025-02-06 19:55:38 - root - INFO - Testing import_data: SUCCESS
+2025-02-06 19:55:40 - root - INFO - perform_eda: SUCCESS
+2025-02-06 19:55:40 - root - INFO - file path churn_distribution.png exists: SUCCESS
+2025-02-06 19:55:40 - root - INFO - file path customer_age_distribution.png exists: SUCCESS
+2025-02-06 19:55:40 - root - INFO - file path marital_status_distribution.png exists: SUCCESS
+2025-02-06 19:55:40 - root - INFO - file path Total_Transaction_distribution.png exists: SUCCESS
+2025-02-06 19:55:40 - root - INFO - file path heatmap.png exists: SUCCESS
+2025-02-06 19:55:40 - root - INFO - encoder helper : SUCCESS
+2025-02-06 19:55:40 - root - INFO - Gender_Churn successfully created : SUCCESS
+2025-02-06 19:55:40 - root - INFO - Education_Level_Churn successfully created : SUCCESS
+2025-02-06 19:55:40 - root - INFO - Marital_Status_Churn successfully created : SUCCESS
+2025-02-06 19:55:40 - root - INFO - Income_Category_Churn successfully created : SUCCESS
+2025-02-06 19:55:40 - root - INFO - Card_Category_Churn successfully created : SUCCESS
+2025-02-06 19:55:40 - root - INFO - perform feature engineering: SUCCESS
+2025-02-06 19:55:40 - root - INFO - X_train has a shape of {obj.shape}
+2025-02-06 19:55:40 - root - INFO - X_test has a shape of {obj.shape}
+2025-02-06 19:55:40 - root - INFO - y_train has a shape of {obj.shape}
+2025-02-06 19:55:40 - root - INFO - y_test has a shape of {obj.shape}
+2025-02-06 19:56:23 - root - INFO - Training model : SUCCESS
+2025-02-06 19:56:23 - root - INFO - Feature Importance plot : SUCCESS
+2025-02-06 19:56:23 - root - INFO - file path feature_importances.png exists: SUCCESS

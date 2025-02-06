@@ -57,7 +57,7 @@ class CustomerChurn():
         '''
         return os.path.join(folder, filename)
 
-    def _import_data(self, nrows=None):
+    def _import_data(self):
         '''
         returns dataframe for the csv found at path
 
@@ -68,12 +68,10 @@ class CustomerChurn():
         '''
 
         self.df = pd.read_csv(
-            os.path.join(
-                constants.DATA_FOLDER,
-                self.filename),
+            os.path.join(constants.DATA_FOLDER, self.filename),
             nrows=self.nrows)
 
-    def _perform_eda(self):
+    def _perform_eda(self, path=None):
         '''
         perform eda on df and save figures to images folder
         Class variables as input
@@ -84,7 +82,8 @@ class CustomerChurn():
                 None
         '''
 
-        path = constants.EDA_IMAGES_FOLDER
+        if path is None:
+            path = constants.EDA_IMAGES_FOLDER
 
         self.df['Churn'] = self.df['Attrition_Flag'].apply(
             lambda val: 0 if val == "Existing Customer" else 1)
@@ -202,7 +201,7 @@ class CustomerChurn():
 
         param_grid = {
             'n_estimators': [200, 500],
-            'max_features': ['auto', 'sqrt'],
+            'max_features': [5, 'sqrt'],
             'max_depth': [4, 5, 100],
             'criterion': ['gini', 'entropy']
         }
@@ -347,14 +346,14 @@ class CustomerChurn():
         '''
         public method to perform EDA, feature creation and model training
         '''
-        self._import_data(self.nrows)
+        self._import_data()
         print("data imported")
         self._perform_eda()
         print('eda performed')
         self._encoder_helper()
         print('encoder helper done')
         self._perform_feature_engineering()
-        print('featured engineered')
+        print('features engineered')
         self._train_models()
         print('model trained')
         self._classification_report_image()
@@ -368,3 +367,4 @@ if __name__ == "__main__":
     customer_churn = CustomerChurn()
     print("object created, lets' execute")
     customer_churn.execute()
+    print("training Completed!")

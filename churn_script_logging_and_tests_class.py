@@ -12,7 +12,7 @@ import logging
 import pytest
 
 import constants
-import churn_library as cls
+import churn_library_class as cls
 
 
 class TestCustomerChurn():
@@ -34,23 +34,40 @@ class TestCustomerChurn():
     y_train_preds_lr = None
     y_test_preds_lr = None
     model = None
+    cc_obj = None
+    logging.basicConfig(
+        filename='./logs/churn_library.log',
+        level=logging.INFO,
+        filemode='w',
+        force=True,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S')
 
     def setup_class(self):
         '''
-        setup the logging at the start of the class
+        create object necessary for the test
         '''
         # https://stackoverflow.com/questions/3220284/how-to-customize-the-time-format-for-python-logging
-        logging.basicConfig(
-            filename='./logs/churn_library.log',
-            level=logging.INFO,
-            filemode='w',
-            force=True,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S')
 
         TestCustomerChurn.datafilename = "bank_data.csv"
+        TestCustomerChurn.cc_obj = cls.CustomerChurn(nrows=50)
 
-    def test_import_data():
+        TestCustomerChurn.logging = logging.getLogger()
+
+        TestCustomerChurn.logging.info("setup_class")
+        TestCustomerChurn.logging.info("class created, df has %s rows",
+                                       TestCustomerChurn.cc_obj.nrows)
+        TestCustomerChurn.logging.info("class created, filename is %s ",
+                                       TestCustomerChurn.cc_obj.filename)
+
+    def teardown_class(self):
+        '''
+        release the object memory at the end of testing
+        '''
+        TestCustomerChurn.cc_obj = None
+        TestCustomerChurn.logging = None
+
+    def test_import_data(self):
         '''
         test data import - this example is completed for you to assist with the
         other test functions
@@ -61,33 +78,35 @@ class TestCustomerChurn():
         '''
 
         try:
-            TestCustomerChurn.df = cls.import_data(
-                TestCustomerChurn.datafilename, TestCustomerChurn.nrows)
-            logging.info("Testing import_data: SUCCESS")
+            TestCustomerChurn.cc_obj._import_data()
+
+            TestCustomerChurn.logging.info("Testing import_data: SUCCESS")
 
         except FileNotFoundError as err:
-            logging.error("Testing import_eda: The file wasn't found")
+            TestCustomerChurn.logging.error("Testing import_eda: The file \
+                wasn't found")
             raise err
 
         try:
-            assert TestCustomerChurn.df.shape[0] > 0
-            assert TestCustomerChurn.df.shape[1] > 0
+            assert TestCustomerChurn.cc_obj.df.shape[0] > 0
+            assert TestCustomerChurn.cc_obj.df.shape[1] > 0
+
         except AssertionError as err:
-            logging.error("Testing import_data: The file doesn't \
-                appear to have rows and columns")
+            TestCustomerChurn.logging.error("Testing import_data: The file \
+            doesn't appear to have rows and columns")
             raise err
 
-    def test_perform_eda(tmp_path):
+    def test_perform_eda(self, tmp_path):
         '''
         test perform eda function
         INPUT:
-            tmp_path: Fixture: retrieve the temporary path for storing the files
-            created during the test execution
+            tmp_path: Fixture: retrieve the temporary path for storing the 
+            files created during the test execution
         OUTPUT:
             None
         '''
         try:
-            cls.perform_eda(TestCustomerChurn.df, tmp_path)
+            TestCustomerChurn.cc_obj._perform_eda(tmp_path)
             logging.info('perform_eda: SUCCESS')
 
         except AssertionError as err:
@@ -111,7 +130,7 @@ class TestCustomerChurn():
                 logging.error("file path % exists: FAILURE", filename)
                 raise err
 
-    def test_encoder_helper(df_in):
+    def test_encoder_helper(self):
         '''
         test encoder helper
         INPUT:
@@ -122,8 +141,7 @@ class TestCustomerChurn():
         '''
 
         try:
-            TestCustomerChurn.df = cls.encoder_helper(
-                TestCustomerChurn.df, constants.CAT_COLUMNS, constants.SUFFIX)
+            TestCustomerChurn.cc_obj._encoder_helper()
             logging.info("encoder helper : SUCCESS")
 
         except AssertionError as err:
@@ -136,23 +154,20 @@ class TestCustomerChurn():
         for col in constants.CAT_COLUMNS:
             try:
                 col_name = f"{col}_{constants.SUFFIX}"
-                if TestCustomerChurn.df[col_name].shape[0] > 0:
+                if TestCustomerChurn.cc_obj.df[col_name].shape[0] > 0:
                     logging.info("%s successfully created : SUCCESS", col_name)
 
             except KeyError as err:
                 logging.error("%s not created : FAILURE", col_name)
                 raise err
 
-    def test_perform_feature_engineering(df_in):
+    def test_perform_feature_engineering(self):
         '''
         test perform_feature_engineering
         '''
 
         try:
-            TestCustomerChurn.X_data, TestCustomerChurn.y_data, \
-                TestCustomerChurn.X_train, TestCustomerChurn.X_test, \
-                TestCustomerChurn.y_train, TestCustomerChurn.y_test \
-                = cls.perform_feature_engineering(TestCustomerChurn.df)
+            TestCustomerChurn.cc_obj._perform_feature_engineering()
 
             logging.info("perform feature engineering: SUCCESS")
 
@@ -160,8 +175,10 @@ class TestCustomerChurn():
             logging.error("perform feature engineering: FAILURE")
             raise err
 
-        lst_obj = [TestCustomerChurn.X_train, TestCustomerChurn.X_test,
-                   TestCustomerChurn.y_train, TestCustomerChurn.y_test]
+        lst_obj = [TestCustomerChurn.cc_obj.X_train,
+                   TestCustomerChurn.cc_obj.X_test,
+                   TestCustomerChurn.cc_obj.y_train,
+                   TestCustomerChurn.cc_obj.y_test]
         lst_str = ["X_train", "X_test", "y_train", "y_test"]
 
         for i, obj in enumerate(lst_obj):
@@ -173,7 +190,7 @@ class TestCustomerChurn():
                 logging.error("%s failed to be created", lst_str[i])
                 raise err
 
-    def test_train_models(df_in, tmp_path):
+    def test_train_models(self, tmp_path):
         '''
         test train_models
         INPUT:
@@ -192,16 +209,9 @@ class TestCustomerChurn():
         # _, _, split_data = cls.perform_feature_engineering(data)
 
         try:
-            TestCustomerChurn.y_train_preds_lr, \
-                TestCustomerChurn.y_train_preds_rf, \
-                TestCustomerChurn.y_test_preds_lr, \
-                TestCustomerChurn.y_test_preds_rf, \
-                TestCustomerChurn.model = cls.train_models(
-                    TestCustomerChurn.X_train, TestCustomerChurn.X_test,
-                    TestCustomerChurn.y_train, TestCustomerChurn.y_test,
-                    tmp_path, tmp_path)
+            TestCustomerChurn.cc_obj._train_models(tmp_path, tmp_path)
 
-            if TestCustomerChurn.model is not None:
+            if TestCustomerChurn.cc_obj.model is not None:
                 logging.info("Training model : SUCCESS")
             else:
                 logging.info("Training model : FAILURE")
@@ -210,7 +220,7 @@ class TestCustomerChurn():
             logging.error("Training model: FAILURE")
             raise err
 
-    def test_feature_importance_plot(tmp_path):
+    def test_feature_importance_plot(self, tmp_path):
         '''
         test feature importance plot
         INPUT:
@@ -222,8 +232,7 @@ class TestCustomerChurn():
 
         '''
         try:
-            cls.feature_importance_plot(TestCustomerChurn.model,
-                                        TestCustomerChurn.X_data, tmp_path)
+            TestCustomerChurn.cc_obj._feature_importance_plot(tmp_path)
             logging.info("Feature Importance plot : SUCCESS")
 
         except AssertionError as err:
